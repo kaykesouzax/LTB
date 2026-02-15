@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Revemar · Preenchimento Automático</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Variáveis ─────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:      #CC0000;
+      --red-dim:  #990000;
+      --dark:     #0d0d0d;
+      --surface:  #141414;
+      --border:   #242424;
+      --muted:    #555;
+      --text:     #e8e8e8;
+      --green:    #2d9e5f;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid de fundo ─────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* ── Topbar ────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px;
+      height: 60px;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .logo-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 900;
+      color: var(--red);
+      letter-spacing: 3px;
+    }
+    .logo-sep { width: 1px; height: 22px; background: var(--border); }
+    .logo-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .honda-badge {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; font-weight: 900;
+      font-style: italic; color: var(--red);
+      letter-spacing: -1px;
+    }
+
+    /* ── Hero ──────────────────────────────────────── */
+    .hero {
+      position: relative; z-index: 1;
+      padding: 80px 40px 60px;
+      max-width: 760px; margin: 0 auto;
+    }
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px; color: var(--red);
+      letter-spacing: 3px; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 900; line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .hero-title span { color: var(--red); }
+    .hero-sub {
+      font-size: 16px; color: #888; line-height: 1.7;
+      max-width: 520px;
+    }
+
+    /* ── Card principal ────────────────────────────── */
+    .main-card {
+      position: relative; z-index: 1;
+      max-width: 760px; margin: 0 auto 80px;
+      padding: 0 40px;
+    }
+
+    /* ── Steps ─────────────────────────────────────── */
+    .steps {
+      display: flex; gap: 0;
+      margin-bottom: 40px;
+      border: 1px solid var(--border);
+    }
+    .step {
+      flex: 1; padding: 18px 20px;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .step:last-child { border-right: none; }
+    .step:hover { background: #1a1a1a; }
+    .step.active { background: #1a1a1a; }
+    .step.active::after {
+      content: '';
+      position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 2px; background: var(--red);
+    }
+    .step.done .step-num { background: var(--green); color: white; }
+    .step-num {
+      width: 24px; height: 24px;
+      background: var(--border); color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      margin-bottom: 8px;
+    }
+    .step-label {
+      font-size: 12px; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+    }
+    .step.active .step-label { color: var(--text); }
+
+    /* ── Painel de conteúdo ────────────────────────── */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Labels & inputs ───────────────────────────── */
+    .field-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 8px; display: block;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px; line-height: 1.7;
+      padding: 16px 18px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus, input:focus { border-color: var(--red); }
+
+    textarea { min-height: 300px; }
+
+    /* ── Upload zone ───────────────────────────────── */
+    .upload-zone {
+      border: 1px dashed var(--border);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      background: var(--surface);
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--red); background: #1a1010; }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 32px; margin-bottom: 12px; }
+    .upload-title { font-size: 15px; color: var(--text); margin-bottom: 6px; }
+    .upload-hint { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+    .upload-success {
+      display: none;
+      align-items: center; gap: 10px;
+      background: #0d1f14; border: 1px solid #2d9e5f;
+      padding: 14px 18px; margin-top: 12px;
+    }
+    .upload-success.show { display: flex; }
+    .upload-success-icon { color: var(--green); font-size: 18px; }
+    .upload-success-name { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--green); }
+
+    /* ── Botões ────────────────────────────────────── */
+    .btn {
+      padding: 14px 28px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      border: none; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--red); color: white;
+    }
+    .btn-primary:hover { background: var(--red-dim); }
+    .btn-primary:disabled { background: #333; color: var(--muted); cursor: not-allowed; }
+    .btn-ghost {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: #444; }
+
+    .btn-row { display: flex; gap: 12px; margin-top: 24px; align-items: center; }
+
+    /* ── Status / loading ──────────────────────────── */
+    .status-bar {
+      display: none;
+      align-items: center; gap: 12px;
+      padding: 14px 18px;
+      margin-top: 16px;
+      font-family: 'DM Mono', monospace; font-size: 12px;
+    }
+    .status-bar.show { display: flex; }
+    .status-bar.loading { background: #1a1610; border: 1px solid #554; color: #aa9; }
+    .status-bar.error   { background: #1a0d0d; border: 1px solid #c33; color: #f88; }
+    .status-bar.success { background: #0d1a12; border: 1px solid var(--green); color: #6f6; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid #554;
+      border-top-color: #aa9;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Backend URL config ────────────────────────── */
+    .config-box {
+      background: #0f0f0f;
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .config-box-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--red);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* ── Preview dos dados ─────────────────────────── */
+    .data-preview {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-top: 16px;
+      display: none;
+    }
+    .data-preview.show { display: block; }
+    .data-preview-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .data-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      background: #1a1a1a; border: 1px solid var(--border);
+      padding: 4px 10px;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+    }
+    .chip strong { color: var(--red); margin-right: 4px; }
+
+    /* ── Footer ────────────────────────────────────── */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 20px 40px;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    /* ── Responsivo ────────────────────────────────── */
+    @media (max-width: 600px) {
+      header, .hero, .main-card { padding-left: 20px; padding-right: 20px; }
+      .steps { flex-direction: column; }
+      .step { border-right: none; border-bottom: 1px solid var(--border); }
+      .step:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ───────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <span class="logo-name">REVEMAR</span>
+    <div class="logo-sep"></div>
+    <span class="logo-tag">Preenchimento Automático</span>
+  </div>
+  <span class="honda-badge">HONDA</span>
+</header>
+
+<!-- ── Hero ─────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-eyebrow">Sistema de documentos</div>
+  <h1 class="hero-title">Cole os dados.<br><span>O documento se preenche.</span></h1>
+  <p class="hero-sub">Cole as informações do cliente do seu sistema, faça o upload do template da empresa e baixe o PDF pronto para assinar.</p>
+</section>
+
+<!-- ── App ──────────────────────────────────────────── -->
+<main class="main-card">
+
+  <!-- Config URL backend -->
+  <div class="config-box">
+    <div class="config-box-title">⚙ URL do Backend (Render)</div>
+    <input type="text" id="backendUrl"
+      placeholder="https://seu-app.onrender.com"
+      value=""
+      style="font-size:12px;"
+    />
+    <div style="font-size:11px;color:#555;margin-top:8px;font-family:'DM Mono',monospace;">
+      Cole aqui a URL do seu serviço no Render após o deploy. Ex: https://revemar-backend.onrender.com
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="step-tab-1" onclick="goStep(1)">
+      <div class="step-num" id="step-num-1">1</div>
+      <div class="step-label">Dados do cliente</div>
+    </div>
+    <div class="step" id="step-tab-2" onclick="goStep(2)">
+      <div class="step-num" id="step-num-2">2</div>
+      <div class="step-label">Upload do template</div>
+    </div>
+    <div class="step" id="step-tab-3" onclick="goStep(3)">
+      <div class="step-num" id="step-num-3">3</div>
+      <div class="step-label">Gerar PDF</div>
+    </div>
+  </div>
+
+  <!-- Painel 1 -->
+  <div class="panel active" id="panel-1">
+    <label class="field-label">Dados do cliente (cole o texto do seu sistema)</label>
+    <textarea id="clientData" placeholder="Nome:
+FULANO DA SILVA
+CPF:
+000.000.000-00
+Data de Nascimento:
+01/01/1990
+Ocupação:
+OUTROS
+..."></textarea>
+
+    <div class="data-preview" id="dataPreview">
+      <div class="data-preview-title">Campos detectados</div>
+      <div class="data-chips" id="dataChips"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="validateStep1()">Próximo →</button>
+      <span id="step1-hint" style="font-family:'DM Mono',monospace;font-size:11px;color:#555;"></span>
+    </div>
+  </div>
+
+  <!-- Painel 2 -->
+  <div class="panel" id="panel-2">
+    <label class="field-label">Template PDF da empresa (COTAS_-_MOTOS.pdf ou similar)</label>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="pdfFile" accept=".pdf" onchange="handleFile(this)" />
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Clique ou arraste o PDF aqui</div>
+      <div class="upload-hint">Apenas arquivos .pdf</div>
+    </div>
+    <div class="upload-success" id="uploadSuccess">
+      <span class="upload-success-icon">✓</span>
+      <span class="upload-success-name" id="uploadFileName"></span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(1)">← Voltar</button>
+      <button class="btn btn-primary" id="btn-step2" onclick="validateStep2()" disabled>Próximo →</button>
+    </div>
+  </div>
+
+  <!-- Painel 3 -->
+  <div class="panel" id="panel-3">
+    <label class="field-label">Resumo</label>
+    <div style="background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:24px;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:12px;">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:#555;width:120px;">CLIENTE</span>
+          <span id="summary-nome" style="font-size:13px;"></span>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:#555;width:120px;">CPF</span>
+          <span id="summary-cpf" style="font-family:'DM Mono',monospace;font-size:13px;"></span>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:#555;width:120px;">MODELO</span>
+          <span id="summary-modelo" style="font-size:13px;"></span>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:#555;width:120px;">TEMPLATE</span>
+          <span id="summary-pdf" style="font-family:'DM Mono',monospace;font-size:13px;color:#2d9e5f;"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div class="spinner" id="spinner"></div>
+      <span id="statusMsg">Processando...</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(2)">← Voltar</button>
+      <button class="btn btn-primary" id="btn-gerar" onclick="gerarPDF()">⬇ Gerar e Baixar PDF</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>REVEMAR · SISTEMA DE PREENCHIMENTO AUTOMÁTICO · CONSÓRCIO HONDA</footer>
+
+<script>
+  let currentStep = 1;
+  let pdfFileSelected = null;
+
+  // ── Navegação entre steps ──────────────────────────
+  function goStep(n) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`panel-${n}`).classList.add('active');
+    document.getElementById(`step-tab-${n}`).classList.add('active');
+    currentStep = n;
+    if (n === 3) buildSummary();
+  }
+
+  function markDone(n) {
+    const numEl = document.getElementById(`step-num-${n}`);
+    numEl.textContent = '✓';
+    document.getElementById(`step-tab-${n}`).classList.add('done');
+  }
+
+  // ── Step 1: validar dados ──────────────────────────
+  function validateStep1() {
+    const raw = document.getElementById('clientData').value.trim();
+    if (!raw) {
+      document.getElementById('step1-hint').textContent = 'Cole os dados do cliente primeiro.';
+      return;
+    }
+    showPreview(raw);
+    markDone(1);
+    goStep(2);
+  }
+
+  function showPreview(raw) {
+    const fields = parseQuick(raw);
+    const chips = document.getElementById('dataChips');
+    chips.innerHTML = '';
+    Object.entries(fields).filter(([,v]) => v).forEach(([k,v]) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerHTML = `<strong>${k}</strong>${v}`;
+      chips.appendChild(chip);
+    });
+    document.getElementById('dataPreview').classList.add('show');
+  }
+
+  function parseQuick(raw) {
+    const get = (label) => {
+      const m = raw.match(new RegExp(label + '[:\\s]*\\n?([^\\n]+)', 'i'));
+      return m ? m[1].trim() : '';
+    };
+    return {
+      'Nome': get('Nome'),
+      'CPF': get('CPF'),
+      'Nascimento': get('Data de Nascimento'),
+      'Cidade': get('Cidade'),
+      'Modelo': get('Modelo'),
+      'Parcela': get('Valor da Parcela'),
+      'Plano': get('Plano'),
+    };
+  }
+
+  // ── Step 2: upload PDF ─────────────────────────────
+  function handleFile(input) {
+    if (input.files && input.files[0]) {
+      pdfFileSelected = input.files[0];
+      document.getElementById('uploadFileName').textContent = pdfFileSelected.name;
+      document.getElementById('uploadSuccess').classList.add('show');
+      document.getElementById('btn-step2').disabled = false;
+    }
+  }
+
+  function validateStep2() {
+    if (!pdfFileSelected) return;
+    markDone(2);
+    goStep(3);
+  }
+
+  // Drag & drop
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      pdfFileSelected = file;
+      document.getElementById('uploadFileName').textContent = file.name;
+      document.getElementById('uploadSuccess').classList.add('show');
+      document.getElementById('btn-step2').disabled = false;
+    }
+  });
+
+  // ── Step 3: resumo ─────────────────────────────────
+  function buildSummary() {
+    const raw = document.getElementById('clientData').value;
+    const f = parseQuick(raw);
+    document.getElementById('summary-nome').textContent   = f['Nome'] || '—';
+    document.getElementById('summary-cpf').textContent    = f['CPF']  || '—';
+    document.getElementById('summary-modelo').textContent = f['Modelo'] || '—';
+    document.getElementById('summary-pdf').textContent    = pdfFileSelected ? pdfFileSelected.name : '—';
+  }
+
+  // ── Gerar PDF ──────────────────────────────────────
+  async function gerarPDF() {
+    const backendUrl = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
+    if (!backendUrl) {
+      showStatus('error', '⚠ Configure a URL do backend primeiro (campo no topo da página).');
+      return;
+    }
+
+    const dados = document.getElementById('clientData').value.trim();
+    if (!dados || !pdfFileSelected) {
+      showStatus('error', '⚠ Dados ou PDF ausentes.');
+      return;
+    }
+
+    showStatus('loading', 'Processando o documento...');
+    document.getElementById('btn-gerar').disabled = true;
+
+    try {
+      const formData = new FormData();
+      formData.append('pdf', pdfFileSelected);
+      formData.append('dados', dados);
+
+      const res = await fetch(`${backendUrl}/preencher`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.erro || `Erro ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const nome = parseQuick(dados)['Nome'] || 'cliente';
+      a.download = `REVEMAR_${nome.replace(/\s+/g,'_')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showStatus('success', '✓ PDF gerado e baixado com sucesso!');
+      markDone(3);
+
+    } catch (err) {
+      showStatus('error', `⚠ ${err.message}`);
+    } finally {
+      document.getElementById('btn-gerar').disabled = false;
+    }
+  }
+
+  function showStatus(type, msg) {
+    const bar = document.getElementById('statusBar');
+    bar.className = `status-bar show ${type}`;
+    document.getElementById('spinner').style.display = type === 'loading' ? 'block' : 'none';
+    document.getElementById('statusMsg').textContent = msg;
+  }
+
+  // Salvar URL do backend no localStorage
+  const savedUrl = localStorage.getItem('revemar_backend_url');
+  if (savedUrl) document.getElementById('backendUrl').value = savedUrl;
+  document.getElementById('backendUrl').addEventListener('change', e => {
+    localStorage.setItem('revemar_backend_url', e.target.value);
+  });
+</script>
+</body>
+</html>
