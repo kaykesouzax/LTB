@@ -8,14 +8,55 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
+# ─── Tabela de vendedores ──────────────────────────────────────────────────
+VENDEDORES = {
+    "29070003": {"nome": "ALEXSANDRO ALVES DE SOUZA",           "pdv": "LABREA"},
+    "29070004": {"nome": "ANDREI ALVES DE SOUZA",               "pdv": "HUMAITA"},
+    "29070005": {"nome": "ANGELA ALMEIDA DA SILVA",             "pdv": "CANUTAMA"},
+    "29070006": {"nome": "ANTONIO MARCIO BATISTA DOS S.",       "pdv": "LABREA"},
+    "29070008": {"nome": "DIEGO PEREIRA GOMES",                 "pdv": "HUMAITA"},
+    "29070009": {"nome": "EDSON RUAN LEAL NOGUEIRA",            "pdv": "HUMAITA"},
+    "29070012": {"nome": "LUAN HENRIQUE ROCHA DIAS",            "pdv": "APUI"},
+    "29070014": {"nome": "RAIMISON DE FRANCA RODRIGUES",        "pdv": "HUMAITA"},
+    "29070016": {"nome": "THALYS CASTRO DA SILVA",              "pdv": "LABREA"},
+    "29070018": {"nome": "JOSE EWERTON BARROS CAVALCANTE",      "pdv": "LABREA"},
+    "29070020": {"nome": "MARIA HELENA GOMES PIMENTA",          "pdv": "HUMAITA"},
+    "29070022": {"nome": "SERGIO MOREIRA DA COSTA JUNIOR",      "pdv": "HUMAITA"},
+    "29070034": {"nome": "CARLOS BARBOSA DE SOUZA",             "pdv": "BOCA DO ACRE"},
+    "29070039": {"nome": "ANTONIO HENRIQUE DA COSTA DOS SANTOS","pdv": "BOCA DO ACRE"},
+    "29070049": {"nome": "ADRIANO JOTAERRY VIEIRA NUNES",       "pdv": "HUMAITA"},
+    "29070052": {"nome": "WENDEL SILVA DE OLIVEIRA",            "pdv": "BOCA DO ACRE"},
+    "29070076": {"nome": "DOUGLAS MACIEL DIAS",                 "pdv": "LABREA"},
+    "29070077": {"nome": "BRUNA CARLA BEZERRA SOUZA",           "pdv": "BOCA DO ACRE"},
+    "29070080": {"nome": "KAWANE ANDRADE KISTNER",              "pdv": "KM 180"},
+    "29070082": {"nome": "RODRIGO DOS SANTOS QUEMEL",           "pdv": "TAPAUA"},
+    "29070087": {"nome": "GUILHERME DO NASCIMENTO MELO",        "pdv": "CANUTAMA"},
+    "29070089": {"nome": "JONAS BARROS COELHO",                 "pdv": "PAUINI"},
+    "29070090": {"nome": "OMAR VALE NASCIMENTO",                "pdv": "PAUINI"},
+    "29070094": {"nome": "TAYANE MAIA E SILVA",                 "pdv": "LABREA"},
+    "29070101": {"nome": "ARTEMISA BELEM DE SOUZA",             "pdv": "LABREA"},
+    "29070109": {"nome": "JOSE WILLIAN DA SILVA PINTO",         "pdv": "HUMAITA"},
+    "29070110": {"nome": "SHIRLANE SANTANA DE MELO",            "pdv": "APUI"},
+    "29070114": {"nome": "ROSIELE DA SILVA TORRES",             "pdv": "HUMAITA"},
+    "29070115": {"nome": "ROSA CARVALHO NUNES",                 "pdv": "HUMAITA"},
+    "29070116": {"nome": "ANTONIA AGUIDA NASCIMENTO DA S.",     "pdv": "LABREA"},
+    "29070118": {"nome": "JANDERSON GUSTAVO CARNEIRO",          "pdv": "LABREA"},
+    "29070119": {"nome": "RUBENITO GOMES ONOFRE JUNIOR",        "pdv": "BOCA DO ACRE"},
+}
+
+def nome_curto(nome_completo):
+    """Retorna PRIMEIRO + ÚLTIMO nome"""
+    partes = nome_completo.strip().split()
+    if len(partes) == 1:
+        return partes[0]
+    return f"{partes[0]} {partes[-1]}"
+
+def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricula="") -> dict:
     def get(label):
-        # Busca label com : e valor na PRÓXIMA linha (para evitar pegar texto do label seguinte)
         pattern = rf"^{re.escape(label)}:\s*\n([^\n]+)"
         match = re.search(pattern, raw, re.IGNORECASE | re.MULTILINE)
         if match:
             val = match.group(1).strip()
-            # Rejeitar se o valor parece ser um label (termina com : ou é linha em branco)
             if val.endswith(':') or not val:
                 return ""
             return val
@@ -46,12 +87,20 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
     tipo_cota     = get("Tipo de Cota").upper()
     plano         = get("Plano").upper()
     data_venda    = get("Data de Venda")
-    nome_vendedor = get("Nome do vendedor") or get("Vendedor")
-    codigo_vend   = get("Código") or get("Codigo")
-    concessionaria = get("Concessionária") or get("Concessionaria")
 
-    nrecibo   = nrecibo_manual or get("Número Recibo") or ""
-    nproposta = nproposta_manual or get("Número Proposta") or ""
+    nrecibo   = nrecibo_manual or ""
+    nproposta = nproposta_manual or ""
+
+    # Lookup vendedor pela matrícula
+    vendedor = VENDEDORES.get(matricula.strip(), {})
+    nome_vendedor = vendedor.get("nome", "")
+    pdv           = vendedor.get("pdv", "")
+
+    # Formato vendedor/código: PRIMEIRO ÚLTIMO - MATRÍCULA
+    if nome_vendedor and matricula:
+        vendedor_codigo = f"{nome_curto(nome_vendedor)} - {matricula}"
+    else:
+        vendedor_codigo = ""
 
     # CPF formatado
     c = re.sub(r'\D', '', cpf)
@@ -92,7 +141,6 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
     }
     mes_venda = meses.get(mes_venda_num, mes_venda_num.upper())
 
-    # Local = Cidade-UF
     local_assinatura = f"{cidade}-{uf}" if cidade and uf else cidade or ""
 
     # Estado civil
@@ -120,9 +168,6 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
         if key in plano:
             plano_field = field
             break
-
-    # Pág 2 e 6: linha acima = CODIGO- NOME, linha abaixo = só código
-    vendedor_linha1 = f"{codigo_vend}- {nome_vendedor}" if codigo_vend and nome_vendedor else codigo_vend or nome_vendedor or ""
 
     fields = {
         "NOME":                   nome,
@@ -165,16 +210,16 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
         "DIA_0HVI":               dia_venda,
         "MES":                    mes_venda,
         "ANO_GXGT":               ano_venda,
-        # Pág 2/6 - vendedor
-        "Assinatura Cliente":     vendedor_linha1,
-        "IDVE":                   codigo_vend,
-        "PDV":                    cidade,
+        # Pág 2 e 6
+        "Assinatura Cliente":     "",           # em branco
+        "IDVE":                   vendedor_codigo,  # PRIMEIRO ÚLTIMO - MATRÍCULA
+        "PDV":                    pdv,              # da lista
         "MAT":                    "",
-        # Pág 3 - grupo/cota/rd em branco
+        # Pág 3
         "autoriza a REVEMAR COMÉRCIO DE MOTOS LTDA CONCESSIONÁRIA a": "",
         "undefined":              "",
         "ANOM":                   "",
-        # Pág 4 - não preencher
+        # Pág 4
         "CIENTE DO PAGAMENTO DO FRETE NO VALOR DE R": "",
         "undefined_2":            "",
         "ESCREVER DE PRÓPRIO PUNHO FICO CIENTE DO VALOR DO FRETE": "",
@@ -198,9 +243,10 @@ def preencher():
     dados_raw        = request.form["dados"]
     nproposta_manual = request.form.get("nproposta", "")
     nrecibo_manual   = request.form.get("nrecibo", "")
+    matricula        = request.form.get("matricula", "")
 
     try:
-        fields = parse_client_data(dados_raw, nproposta_manual, nrecibo_manual)
+        fields = parse_client_data(dados_raw, nproposta_manual, nrecibo_manual, matricula)
         reader = PdfReader(pdf_file)
         writer = PdfWriter()
         writer.append(reader)
@@ -224,6 +270,19 @@ def preencher():
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
+
+@app.route("/vendedor/<matricula>", methods=["GET"])
+def get_vendedor(matricula):
+    """Endpoint para o frontend consultar nome e PDV pela matrícula"""
+    vendedor = VENDEDORES.get(matricula.strip())
+    if vendedor:
+        return jsonify({
+            "matricula": matricula,
+            "nome": vendedor["nome"],
+            "nome_curto": nome_curto(vendedor["nome"]),
+            "pdv": vendedor["pdv"]
+        })
+    return jsonify({"erro": "Matrícula não encontrada"}), 404
 
 @app.route("/health", methods=["GET"])
 def health():
