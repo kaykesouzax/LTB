@@ -27,8 +27,6 @@
         linear-gradient(90deg, var(--border) 1px, transparent 1px);
       background-size: 48px 48px; opacity: 0.4; pointer-events: none;
     }
-
-    /* ── Header ── */
     header {
       position: sticky; top: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
@@ -37,96 +35,33 @@
       border-bottom: 1px solid var(--border);
     }
     .logo { display: flex; align-items: center; gap: 14px; }
-    .logo-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px; font-weight: 900; color: var(--red); letter-spacing: 3px;
-    }
+    .logo-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--red); letter-spacing: 3px; }
     .logo-sep { width: 1px; height: 22px; background: var(--border); }
-    .logo-tag {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase;
-    }
-    .header-right {
-      font-family: 'Playfair Display', serif;
-      font-size: 18px; font-weight: 900; font-style: italic;
-      color: var(--red); letter-spacing: 1px;
-    }
-
-    /* ── Hero ── */
-    .hero {
-      position: relative; z-index: 1;
-      padding: 80px 40px 60px; max-width: 760px; margin: 0 auto;
-    }
-    .hero-eyebrow {
-      font-family: 'DM Mono', monospace; font-size: 11px; color: var(--red);
-      letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px;
-    }
-    .hero-title {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(36px, 5vw, 56px); font-weight: 900; line-height: 1.1; margin-bottom: 20px;
-    }
+    .logo-tag { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+    .header-right { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; font-style: italic; color: var(--red); }
+    .hero { position: relative; z-index: 1; padding: 80px 40px 60px; max-width: 760px; margin: 0 auto; }
+    .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--red); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+    .hero-title { font-family: 'Playfair Display', serif; font-size: clamp(36px, 5vw, 56px); font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
     .hero-title span { color: var(--red); }
     .hero-sub { font-size: 16px; color: #888; line-height: 1.7; max-width: 520px; }
-
-    /* ── Card ── */
-    .main-card {
-      position: relative; z-index: 1;
-      max-width: 760px; margin: 0 auto 80px; padding: 0 40px;
-    }
-
-    /* ── Config box ── */
-    .config-box {
-      background: #0f0f0f; border: 1px solid var(--border);
-      padding: 20px; margin-bottom: 32px;
-    }
-    .config-box-title {
-      font-family: 'DM Mono', monospace; font-size: 10px; color: var(--red);
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;
-    }
-
-    /* ── Steps ── */
-    .steps {
-      display: flex; gap: 0; margin-bottom: 40px; border: 1px solid var(--border);
-    }
-    .step {
-      flex: 1; padding: 18px 20px; border-right: 1px solid var(--border);
-      cursor: pointer; transition: background 0.2s; position: relative;
-    }
+    .main-card { position: relative; z-index: 1; max-width: 760px; margin: 0 auto 80px; padding: 0 40px; }
+    .config-box { background: #0f0f0f; border: 1px solid var(--border); padding: 20px; margin-bottom: 32px; }
+    .config-box-title { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--red); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+    .steps { display: flex; margin-bottom: 40px; border: 1px solid var(--border); }
+    .step { flex: 1; padding: 18px 20px; border-right: 1px solid var(--border); cursor: pointer; transition: background 0.2s; position: relative; }
     .step:last-child { border-right: none; }
     .step:hover { background: #1a1a1a; }
     .step.active { background: #1a1a1a; }
-    .step.active::after {
-      content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
-      height: 2px; background: var(--red);
-    }
+    .step.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--red); }
     .step.done .step-num { background: var(--green); color: white; }
-    .step-num {
-      width: 24px; height: 24px; background: var(--border); color: var(--muted);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'DM Mono', monospace; font-size: 11px; margin-bottom: 8px;
-    }
-    .step-label {
-      font-size: 12px; color: var(--muted);
-      letter-spacing: 1px; text-transform: uppercase; font-family: 'DM Mono', monospace;
-    }
+    .step-num { width: 24px; height: 24px; background: var(--border); color: var(--muted); display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 11px; margin-bottom: 8px; }
+    .step-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-family: 'DM Mono', monospace; }
     .step.active .step-label { color: var(--text); }
-
-    /* ── Panels ── */
     .panel { display: none; }
     .panel.active { display: block; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Labels & inputs ── */
-    .field-label {
-      font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted);
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: block;
-    }
-    .field-label.required::after {
-      content: ' *'; color: var(--red);
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .field-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+    .field-label.required::after { content: ' *'; color: var(--red); }
     textarea, input[type="text"] {
       width: 100%; background: var(--surface); border: 1px solid var(--border);
       color: var(--text); font-family: 'DM Mono', monospace;
@@ -135,103 +70,50 @@
     }
     textarea:focus, input:focus { border-color: var(--red); }
     textarea { min-height: 300px; }
-
     input.error { border-color: #cc3333 !important; }
-    .error-msg {
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      color: #f88; margin-top: 6px; display: none;
-    }
+    .error-msg { font-family: 'DM Mono', monospace; font-size: 11px; color: #f88; margin-top: 6px; display: none; }
     .error-msg.show { display: block; }
-
-    /* ── Campos manuais lado a lado ── */
-    .fields-row {
-      display: flex; gap: 16px; margin-bottom: 24px;
-    }
+    .fields-row { display: flex; gap: 16px; margin-bottom: 16px; }
     .fields-row .field-group { flex: 1; }
-
-    /* ── Upload zone ── */
-    .upload-zone {
-      border: 1px dashed var(--border); padding: 48px 24px; text-align: center;
-      cursor: pointer; transition: all 0.2s; position: relative; background: var(--surface);
-    }
+    .upload-zone { border: 1px dashed var(--border); padding: 48px 24px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; background: var(--surface); }
     .upload-zone:hover, .upload-zone.drag { border-color: var(--red); background: #1a1010; }
     .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     .upload-icon { font-size: 32px; margin-bottom: 12px; }
     .upload-title { font-size: 15px; color: var(--text); margin-bottom: 6px; }
     .upload-hint { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
-    .upload-success {
-      display: none; align-items: center; gap: 10px;
-      background: #0d1f14; border: 1px solid #2d9e5f;
-      padding: 14px 18px; margin-top: 12px;
-    }
+    .upload-success { display: none; align-items: center; gap: 10px; background: #0d1f14; border: 1px solid #2d9e5f; padding: 14px 18px; margin-top: 12px; }
     .upload-success.show { display: flex; }
     .upload-success-icon { color: var(--green); font-size: 18px; }
     .upload-success-name { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--green); }
-
-    /* ── Botões ── */
-    .btn {
-      padding: 14px 28px; font-family: 'DM Mono', monospace;
-      font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-      border: none; cursor: pointer; transition: all 0.2s;
-    }
+    .btn { padding: 14px 28px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.2s; }
     .btn-primary { background: var(--red); color: white; }
     .btn-primary:hover { background: var(--red-dim); }
     .btn-primary:disabled { background: #333; color: var(--muted); cursor: not-allowed; }
-    .btn-ghost {
-      background: transparent; color: var(--muted); border: 1px solid var(--border);
-    }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
     .btn-ghost:hover { color: var(--text); border-color: #444; }
     .btn-row { display: flex; gap: 12px; margin-top: 24px; align-items: center; }
-
-    /* ── Status ── */
-    .status-bar {
-      display: none; align-items: center; gap: 12px;
-      padding: 14px 18px; margin-top: 16px;
-      font-family: 'DM Mono', monospace; font-size: 12px;
-    }
+    .status-bar { display: none; align-items: center; gap: 12px; padding: 14px 18px; margin-top: 16px; font-family: 'DM Mono', monospace; font-size: 12px; }
     .status-bar.show { display: flex; }
     .status-bar.loading { background: #1a1610; border: 1px solid #554; color: #aa9; }
     .status-bar.error   { background: #1a0d0d; border: 1px solid #c33; color: #f88; }
     .status-bar.success { background: #0d1a12; border: 1px solid var(--green); color: #6f6; }
-    .spinner {
-      width: 16px; height: 16px; border: 2px solid #554;
-      border-top-color: #aa9; border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
+    .spinner { width: 16px; height: 16px; border: 2px solid #554; border-top-color: #aa9; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Caixa de campos manuais no step 3 ── */
-    .manual-box {
-      background: #0f0f0f; border: 1px solid var(--red);
-      padding: 20px; margin-bottom: 24px;
-    }
-    .manual-box-title {
-      font-family: 'DM Mono', monospace; font-size: 10px; color: var(--red);
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px;
-    }
-
-    /* ── Summary ── */
-    .summary-box {
-      background: var(--surface); border: 1px solid var(--border);
-      padding: 20px; margin-bottom: 24px;
-    }
+    .manual-box { background: #0f0f0f; border: 1px solid var(--red); padding: 20px; margin-bottom: 24px; }
+    .manual-box-title { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--red); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+    /* Vendedor preview */
+    .vendedor-preview { display: none; background: #0d1a12; border: 1px solid var(--green); padding: 12px 16px; margin-top: 10px; }
+    .vendedor-preview.show { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+    .vendedor-info { font-family: 'DM Mono', monospace; font-size: 11px; }
+    .vendedor-info span { color: var(--muted); margin-right: 6px; }
+    .vendedor-info strong { color: #6f6; }
+    .summary-box { background: var(--surface); border: 1px solid var(--border); padding: 20px; margin-bottom: 24px; }
     .summary-row { display: flex; gap: 12px; margin-bottom: 10px; }
     .summary-row:last-child { margin-bottom: 0; }
-    .summary-key {
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      color: var(--muted); width: 130px; flex-shrink: 0;
-    }
+    .summary-key { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); width: 130px; flex-shrink: 0; }
     .summary-val { font-size: 13px; }
     .summary-val.green { color: var(--green); font-family: 'DM Mono', monospace; font-size: 12px; }
-
-    /* ── Footer ── */
-    footer {
-      position: relative; z-index: 1; border-top: 1px solid var(--border);
-      padding: 20px 40px; text-align: center;
-      font-family: 'DM Mono', monospace; font-size: 10px;
-      color: var(--muted); letter-spacing: 2px;
-    }
-
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 20px 40px; text-align: center; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 2px; }
     @media (max-width: 600px) {
       header, .hero, .main-card { padding-left: 20px; padding-right: 20px; }
       .steps { flex-direction: column; }
@@ -260,16 +142,12 @@
 
 <main class="main-card">
 
-  <!-- Config URL backend -->
   <div class="config-box">
     <div class="config-box-title">⚙ URL do Backend (Render)</div>
     <input type="text" id="backendUrl" placeholder="https://seu-app.onrender.com"/>
-    <div style="font-size:11px;color:#555;margin-top:8px;font-family:'DM Mono',monospace;">
-      Cole aqui a URL do seu serviço no Render após o deploy.
-    </div>
+    <div style="font-size:11px;color:#555;margin-top:8px;font-family:'DM Mono',monospace;">Cole aqui a URL do seu serviço no Render após o deploy.</div>
   </div>
 
-  <!-- Steps -->
   <div class="steps">
     <div class="step active" id="step-tab-1" onclick="goStep(1)">
       <div class="step-num" id="step-num-1">1</div>
@@ -292,8 +170,6 @@
 FULANO DA SILVA
 CPF:
 000.000.000-00
-Data de Nascimento:
-01/01/1990
 ..."></textarea>
     <div class="btn-row">
       <button class="btn btn-primary" onclick="validateStep1()">Próximo →</button>
@@ -322,10 +198,21 @@ Data de Nascimento:
 
   <!-- Painel 3 -->
   <div class="panel" id="panel-3">
-
-    <!-- Campos obrigatórios manuais -->
     <div class="manual-box">
       <div class="manual-box-title">⚠ Campos obrigatórios — preencha antes de gerar</div>
+
+      <!-- Matrícula em linha própria -->
+      <div style="margin-bottom:16px;">
+        <label class="field-label required">Matrícula do Vendedor</label>
+        <input type="text" id="matricula" placeholder="Ex: 29070012" oninput="onMatriculaInput()"/>
+        <div class="error-msg" id="err-matricula">Matrícula não encontrada ou campo vazio</div>
+        <div class="vendedor-preview" id="vendedorPreview">
+          <div class="vendedor-info"><span>VENDEDOR</span><strong id="preview-nome">—</strong></div>
+          <div class="vendedor-info"><span>PDV</span><strong id="preview-pdv">—</strong></div>
+        </div>
+      </div>
+
+      <!-- Proposta e Recibo lado a lado -->
       <div class="fields-row">
         <div class="field-group">
           <label class="field-label required">Nº da Proposta</label>
@@ -342,22 +229,10 @@ Data de Nascimento:
 
     <!-- Resumo -->
     <div class="summary-box">
-      <div class="summary-row">
-        <span class="summary-key">CLIENTE</span>
-        <span class="summary-val" id="summary-nome">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">CPF</span>
-        <span class="summary-val" id="summary-cpf" style="font-family:'DM Mono',monospace;font-size:12px;">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">MODELO</span>
-        <span class="summary-val" id="summary-modelo">—</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-key">TEMPLATE</span>
-        <span class="summary-val green" id="summary-pdf">—</span>
-      </div>
+      <div class="summary-row"><span class="summary-key">CLIENTE</span><span class="summary-val" id="summary-nome">—</span></div>
+      <div class="summary-row"><span class="summary-key">CPF</span><span class="summary-val" id="summary-cpf" style="font-family:'DM Mono',monospace;font-size:12px;">—</span></div>
+      <div class="summary-row"><span class="summary-key">MODELO</span><span class="summary-val" id="summary-modelo">—</span></div>
+      <div class="summary-row"><span class="summary-key">TEMPLATE</span><span class="summary-val green" id="summary-pdf">—</span></div>
     </div>
 
     <div class="status-bar" id="statusBar">
@@ -377,6 +252,7 @@ Data de Nascimento:
 
 <script>
   let pdfFileSelected = null;
+  let vendedorValido  = false;
 
   function goStep(n) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -387,24 +263,17 @@ Data de Nascimento:
   }
 
   function markDone(n) {
-    const numEl = document.getElementById(`step-num-${n}`);
-    numEl.textContent = '✓';
+    document.getElementById(`step-num-${n}`).textContent = '✓';
     document.getElementById(`step-tab-${n}`).classList.add('done');
   }
 
-  // Step 1
   function validateStep1() {
     const raw = document.getElementById('clientData').value.trim();
-    if (!raw) {
-      document.getElementById('step1-hint').textContent = 'Cole os dados do cliente primeiro.';
-      return;
-    }
+    if (!raw) { document.getElementById('step1-hint').textContent = 'Cole os dados do cliente primeiro.'; return; }
     document.getElementById('step1-hint').textContent = '';
-    markDone(1);
-    goStep(2);
+    markDone(1); goStep(2);
   }
 
-  // Step 2
   function handleFile(input) {
     if (input.files && input.files[0]) {
       pdfFileSelected = input.files[0];
@@ -416,11 +285,9 @@ Data de Nascimento:
 
   function validateStep2() {
     if (!pdfFileSelected) return;
-    markDone(2);
-    goStep(3);
+    markDone(2); goStep(3);
   }
 
-  // Drag & drop
   const zone = document.getElementById('uploadZone');
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
@@ -435,10 +302,46 @@ Data de Nascimento:
     }
   });
 
-  // Summary
+  // Lookup de matrícula
+  let matriculaTimer = null;
+  function onMatriculaInput() {
+    clearError('matricula');
+    vendedorValido = false;
+    document.getElementById('vendedorPreview').classList.remove('show');
+    clearTimeout(matriculaTimer);
+    const mat = document.getElementById('matricula').value.trim();
+    if (mat.length >= 5) {
+      matriculaTimer = setTimeout(() => buscarVendedor(mat), 400);
+    }
+  }
+
+  async function buscarVendedor(mat) {
+    const backendUrl = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
+    if (!backendUrl) return;
+    try {
+      const res = await fetch(`${backendUrl}/vendedor/${mat}`);
+      if (!res.ok) throw new Error('não encontrado');
+      const data = await res.json();
+      document.getElementById('preview-nome').textContent = data.nome_curto + ' (' + data.nome + ')';
+      document.getElementById('preview-pdv').textContent  = data.pdv;
+      document.getElementById('vendedorPreview').classList.add('show');
+      vendedorValido = true;
+    } catch {
+      document.getElementById('matricula').classList.add('error');
+      document.getElementById('err-matricula').classList.add('show');
+      document.getElementById('err-matricula').textContent = 'Matrícula não encontrada';
+      vendedorValido = false;
+    }
+  }
+
+  function clearError(id) {
+    document.getElementById(`err-${id}`).classList.remove('show');
+    document.getElementById(id).classList.remove('error');
+  }
+
   function parseQuick(raw) {
     const get = (label) => {
-      const m = raw.match(new RegExp(label + '[:\\s]*\\n?([^\\n]+)', 'i'));
+      const m = raw.match(new RegExp('^' + label + ':\\s*\\n([^\\n]+)', 'im'));
       return m ? m[1].trim() : '';
     };
     return { Nome: get('Nome'), CPF: get('CPF'), Modelo: get('Modelo') };
@@ -453,17 +356,18 @@ Data de Nascimento:
     document.getElementById('summary-pdf').textContent    = pdfFileSelected ? pdfFileSelected.name : '—';
   }
 
-  // Validação campos manuais
-  function clearError(id) {
-    document.getElementById(`err-${id}`).classList.remove('show');
-    document.getElementById(id).classList.remove('error');
-  }
-
   function validateManuais() {
+    const mat      = document.getElementById('matricula').value.trim();
     const nproposta = document.getElementById('nproposta').value.trim();
     const nrecibo   = document.getElementById('nrecibo').value.trim();
     let ok = true;
 
+    if (!mat || !vendedorValido) {
+      document.getElementById('matricula').classList.add('error');
+      document.getElementById('err-matricula').classList.add('show');
+      document.getElementById('err-matricula').textContent = !mat ? 'Campo obrigatório' : 'Matrícula não encontrada';
+      ok = false;
+    }
     if (!nproposta) {
       document.getElementById('nproposta').classList.add('error');
       document.getElementById('err-nproposta').classList.add('show');
@@ -477,41 +381,29 @@ Data de Nascimento:
     return ok;
   }
 
-  // Gerar PDF
   async function gerarPDF() {
     if (!validateManuais()) {
-      showStatus('error', '⚠ Preencha o Nº da Proposta e o Nº do Recibo antes de gerar.');
+      showStatus('error', '⚠ Preencha todos os campos obrigatórios antes de gerar.');
       return;
     }
-
     const backendUrl = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
-    if (!backendUrl) {
-      showStatus('error', '⚠ Configure a URL do backend primeiro.');
-      return;
-    }
-
+    if (!backendUrl) { showStatus('error', '⚠ Configure a URL do backend primeiro.'); return; }
     const dados = document.getElementById('clientData').value.trim();
-    if (!dados || !pdfFileSelected) {
-      showStatus('error', '⚠ Dados ou PDF ausentes.');
-      return;
-    }
+    if (!dados || !pdfFileSelected) { showStatus('error', '⚠ Dados ou PDF ausentes.'); return; }
 
     showStatus('loading', 'Processando o documento...');
     document.getElementById('btn-gerar').disabled = true;
 
     try {
       const formData = new FormData();
-      formData.append('pdf', pdfFileSelected);
-      formData.append('dados', dados);
+      formData.append('pdf',       pdfFileSelected);
+      formData.append('dados',     dados);
       formData.append('nproposta', document.getElementById('nproposta').value.trim());
       formData.append('nrecibo',   document.getElementById('nrecibo').value.trim());
+      formData.append('matricula', document.getElementById('matricula').value.trim());
 
       const res = await fetch(`${backendUrl}/preencher`, { method: 'POST', body: formData });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.erro || `Erro ${res.status}`);
-      }
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.erro || `Erro ${res.status}`); }
 
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
@@ -524,7 +416,6 @@ Data de Nascimento:
 
       showStatus('success', '✓ PDF gerado e baixado com sucesso!');
       markDone(3);
-
     } catch (err) {
       showStatus('error', `⚠ ${err.message}`);
     } finally {
@@ -539,7 +430,6 @@ Data de Nascimento:
     document.getElementById('statusMsg').textContent = msg;
   }
 
-  // Salvar URL backend
   const savedUrl = localStorage.getItem('revemar_backend_url');
   if (savedUrl) document.getElementById('backendUrl').value = savedUrl;
   document.getElementById('backendUrl').addEventListener('change', e => {
