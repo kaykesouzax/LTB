@@ -44,8 +44,19 @@ VENDEDORES = {
     "29070119": {"nome": "RUBENITO GOMES ONOFRE JUNIOR",        "pdv": "BOCA DO ACRE"},
 }
 
+# ─── Tabela de fretes por PDV ──────────────────────────────────────────────
+FRETES = {
+    "LABREA":       {"valor": "650,00", "extenso": "SEISCENTOS E CINQUENTA"},
+    "CANUTAMA":     {"valor": "550,00", "extenso": "QUINHENTOS E CINQUENTA"},
+    "TAPAUA":       {"valor": "550,00", "extenso": "QUINHENTOS E CINQUENTA"},
+    "HUMAITA":      {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "KM 180":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "APUI":         {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "BOCA DO ACRE": {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "PAUINI":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+}
+
 def nome_curto(nome_completo):
-    """Retorna PRIMEIRO + ÚLTIMO nome"""
     partes = nome_completo.strip().split()
     if len(partes) == 1:
         return partes[0]
@@ -91,12 +102,17 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
     nrecibo   = nrecibo_manual or ""
     nproposta = nproposta_manual or ""
 
-    # Lookup vendedor pela matrícula
-    vendedor = VENDEDORES.get(matricula.strip(), {})
+    # Lookup vendedor
+    vendedor      = VENDEDORES.get(matricula.strip(), {})
     nome_vendedor = vendedor.get("nome", "")
     pdv           = vendedor.get("pdv", "")
 
-    # Formato vendedor/código: PRIMEIRO ÚLTIMO - MATRÍCULA
+    # Lookup frete pelo PDV
+    frete         = FRETES.get(pdv.upper(), {})
+    frete_valor   = frete.get("valor", "")
+    frete_extenso = frete.get("extenso", "")
+
+    # Vendedor/Código: PRIMEIRO ÚLTIMO - MATRÍCULA
     if nome_vendedor and matricula:
         vendedor_codigo = f"{nome_curto(nome_vendedor)} - {matricula}"
     else:
@@ -211,17 +227,17 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
         "MES":                    mes_venda,
         "ANO_GXGT":               ano_venda,
         # Pág 2 e 6
-        "Assinatura Cliente":     "",           # em branco
-        "IDVE":                   vendedor_codigo,  # PRIMEIRO ÚLTIMO - MATRÍCULA
-        "PDV":                    pdv,              # da lista
+        "Assinatura Cliente":     "",
+        "IDVE":                   vendedor_codigo,
+        "PDV":                    pdv,
         "MAT":                    "",
         # Pág 3
         "autoriza a REVEMAR COMÉRCIO DE MOTOS LTDA CONCESSIONÁRIA a": "",
         "undefined":              "",
         "ANOM":                   "",
-        # Pág 4
-        "CIENTE DO PAGAMENTO DO FRETE NO VALOR DE R": "",
-        "undefined_2":            "",
+        # Pág 4 - frete automático pelo PDV
+        "CIENTE DO PAGAMENTO DO FRETE NO VALOR DE R": frete_valor,
+        "undefined_2":            frete_extenso,
         "ESCREVER DE PRÓPRIO PUNHO FICO CIENTE DO VALOR DO FRETE": "",
         "Assinatura do responsável Legal ou Assinatura a Rogo quando": "",
         "Assinatura do responsável Legal ou Assinatura a Rogo": "",
@@ -273,14 +289,16 @@ def preencher():
 
 @app.route("/vendedor/<matricula>", methods=["GET"])
 def get_vendedor(matricula):
-    """Endpoint para o frontend consultar nome e PDV pela matrícula"""
     vendedor = VENDEDORES.get(matricula.strip())
     if vendedor:
+        pdv    = vendedor["pdv"]
+        frete  = FRETES.get(pdv.upper(), {})
         return jsonify({
-            "matricula": matricula,
-            "nome": vendedor["nome"],
+            "matricula":  matricula,
+            "nome":       vendedor["nome"],
             "nome_curto": nome_curto(vendedor["nome"]),
-            "pdv": vendedor["pdv"]
+            "pdv":        pdv,
+            "frete":      frete.get("valor", ""),
         })
     return jsonify({"erro": "Matrícula não encontrada"}), 404
 
