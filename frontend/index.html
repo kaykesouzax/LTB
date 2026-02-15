@@ -384,6 +384,7 @@ CPF:
       return;
     }
     const backendUrl = BACKEND_URL;
+    const dados = document.getElementById('clientData').value.trim();
     if (!dados || !pdfFileSelected) { showStatus('error', '⚠ Dados ou PDF ausentes.'); return; }
 
     showStatus('loading', 'Processando o documento...');
