@@ -142,12 +142,6 @@
 
 <main class="main-card">
 
-  <div class="config-box">
-    <div class="config-box-title">⚙ URL do Backend (Render)</div>
-    <input type="text" id="backendUrl" placeholder="https://seu-app.onrender.com"/>
-    <div style="font-size:11px;color:#555;margin-top:8px;font-family:'DM Mono',monospace;">Cole aqui a URL do seu serviço no Render após o deploy.</div>
-  </div>
-
   <div class="steps">
     <div class="step active" id="step-tab-1" onclick="goStep(1)">
       <div class="step-num" id="step-num-1">1</div>
@@ -316,9 +310,10 @@ CPF:
     }
   }
 
+  const BACKEND_URL = 'https://cotas-097p.onrender.com';
+
   async function buscarVendedor(mat) {
-    const backendUrl = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
-    if (!backendUrl) return;
+    const backendUrl = BACKEND_URL;
     try {
       const res = await fetch(`${backendUrl}/vendedor/${mat}`);
       if (!res.ok) throw new Error('não encontrado');
@@ -388,9 +383,7 @@ CPF:
       showStatus('error', '⚠ Preencha todos os campos obrigatórios antes de gerar.');
       return;
     }
-    const backendUrl = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
-    if (!backendUrl) { showStatus('error', '⚠ Configure a URL do backend primeiro.'); return; }
-    const dados = document.getElementById('clientData').value.trim();
+    const backendUrl = BACKEND_URL;
     if (!dados || !pdfFileSelected) { showStatus('error', '⚠ Dados ou PDF ausentes.'); return; }
 
     showStatus('loading', 'Processando o documento...');
@@ -432,11 +425,6 @@ CPF:
     document.getElementById('statusMsg').textContent = msg;
   }
 
-  const savedUrl = localStorage.getItem('revemar_backend_url');
-  if (savedUrl) document.getElementById('backendUrl').value = savedUrl;
-  document.getElementById('backendUrl').addEventListener('change', e => {
-    localStorage.setItem('revemar_backend_url', e.target.value);
-  });
-</script>
+  </script>
 </body>
 </html>
