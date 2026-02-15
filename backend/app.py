@@ -10,9 +10,16 @@ CORS(app)
 
 def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
     def get(label):
-        pattern = rf"{re.escape(label)}[:\s]*\n?([^\n]+)"
-        match = re.search(pattern, raw, re.IGNORECASE)
-        return match.group(1).strip() if match else ""
+        # Busca label com : e valor na PRÓXIMA linha (para evitar pegar texto do label seguinte)
+        pattern = rf"^{re.escape(label)}:\s*\n([^\n]+)"
+        match = re.search(pattern, raw, re.IGNORECASE | re.MULTILINE)
+        if match:
+            val = match.group(1).strip()
+            # Rejeitar se o valor parece ser um label (termina com : ou é linha em branco)
+            if val.endswith(':') or not val:
+                return ""
+            return val
+        return ""
 
     nome          = get("Nome")
     ddn           = get("Data de Nascimento")
@@ -43,9 +50,8 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
     codigo_vend   = get("Código") or get("Codigo")
     concessionaria = get("Concessionária") or get("Concessionaria")
 
-    # Nº Proposta e Recibo: manual tem prioridade, senão tenta extrair
-    nrecibo   = nrecibo_manual or get("Número Recibo") or get("Nº Recibo") or get("Recibo") or ""
-    nproposta = nproposta_manual or get("Número Proposta") or get("Nº Proposta") or get("Proposta") or ""
+    nrecibo   = nrecibo_manual or get("Número Recibo") or ""
+    nproposta = nproposta_manual or get("Número Proposta") or ""
 
     # CPF formatado
     c = re.sub(r'\D', '', cpf)
@@ -55,15 +61,11 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
     def fmt_ddd(p):
         d = re.sub(r'\D', '', p)
         return d[:2] if len(d) >= 2 else ""
-
     def fmt_tel(p):
         d = re.sub(r'\D', '', p)
         if len(d) == 11: return f"{d[2:7]}-{d[7:]}"
         if len(d) == 10: return f"{d[2:6]}-{d[6:]}"
         return p
-
-    ddd1 = fmt_ddd(phone1)
-    tel1 = fmt_tel(phone1)
 
     # Data nascimento
     ddn_parts = re.split(r'[/\-]', ddn)
@@ -83,7 +85,6 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
     dia_venda     = data_parts[0].zfill(2) if len(data_parts) > 0 and data_parts[0] else ""
     mes_venda_num = data_parts[1].zfill(2) if len(data_parts) > 1 else ""
     ano_venda     = data_parts[2] if len(data_parts) > 2 else ""
-
     meses = {
         "01":"JANEIRO","02":"FEVEREIRO","03":"MARÇO","04":"ABRIL",
         "05":"MAIO","06":"JUNHO","07":"JULHO","08":"AGOSTO",
@@ -91,6 +92,7 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
     }
     mes_venda = meses.get(mes_venda_num, mes_venda_num.upper())
 
+    # Local = Cidade-UF
     local_assinatura = f"{cidade}-{uf}" if cidade and uf else cidade or ""
 
     # Estado civil
@@ -119,7 +121,8 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
             plano_field = field
             break
 
-    vendedor_codigo = f"{codigo_vend}- {nome_vendedor}" if codigo_vend and nome_vendedor else codigo_vend or nome_vendedor or ""
+    # Pág 2 e 6: linha acima = CODIGO- NOME, linha abaixo = só código
+    vendedor_linha1 = f"{codigo_vend}- {nome_vendedor}" if codigo_vend and nome_vendedor else codigo_vend or nome_vendedor or ""
 
     fields = {
         "NOME":                   nome,
@@ -143,8 +146,8 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
         "CIDADE":                 cidade,
         "ESTADO":                 uf,
         "CEP":                    cep,
-        "DDD 1":                  ddd1,
-        "TELEFONE 1":             tel1,
+        "DDD 1":                  fmt_ddd(phone1),
+        "TELEFONE 1":             fmt_tel(phone1),
         "TELEFONE 2":             phone2,
         "EMAIL":                  email,
         "NRECI":                  nrecibo,
@@ -162,13 +165,16 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="") -> dict:
         "DIA_0HVI":               dia_venda,
         "MES":                    mes_venda,
         "ANO_GXGT":               ano_venda,
-        "Assinatura Cliente":     vendedor_codigo,
+        # Pág 2/6 - vendedor
+        "Assinatura Cliente":     vendedor_linha1,
         "IDVE":                   codigo_vend,
-        "PDV":                    concessionaria or cidade,
+        "PDV":                    cidade,
         "MAT":                    "",
-        "autoriza a REVEMAR COMÉRCIO DE MOTOS LTDA CONCESSIONÁRIA a": nome,
+        # Pág 3 - grupo/cota/rd em branco
+        "autoriza a REVEMAR COMÉRCIO DE MOTOS LTDA CONCESSIONÁRIA a": "",
         "undefined":              "",
         "ANOM":                   "",
+        # Pág 4 - não preencher
         "CIENTE DO PAGAMENTO DO FRETE NO VALOR DE R": "",
         "undefined_2":            "",
         "ESCREVER DE PRÓPRIO PUNHO FICO CIENTE DO VALOR DO FRETE": "",
@@ -188,8 +194,8 @@ def preencher():
     if "dados" not in request.form:
         return jsonify({"erro": "Dados do cliente não enviados"}), 400
 
-    pdf_file       = request.files["pdf"]
-    dados_raw      = request.form["dados"]
+    pdf_file         = request.files["pdf"]
+    dados_raw        = request.form["dados"]
     nproposta_manual = request.form.get("nproposta", "")
     nrecibo_manual   = request.form.get("nrecibo", "")
 
