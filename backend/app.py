@@ -106,33 +106,68 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
     rg_match = re.search(r'Número\s+Documento:.*?\n(?:REGISTRO\s+GERAL|RG)?\s*\n?([0-9]+)', raw, re.I | re.DOTALL)
     rg = rg_match.group(1).strip() if rg_match else (get("Número do Documento") or get("RG"))
     
+    # Órgão Emissor e Data Emissão - novo formato: "Orgão Expeditor:\n Data Emissão:\n SSP AM\n 13/02/2023"
+    orgao_match = re.search(r'Orgão\s+Expeditor:.*?\n(?:Data\s+Emissão:)?\s*\n([^\n]+)\n([0-9]{2}/[0-9]{2}/[0-9]{4})', raw, re.I | re.DOTALL)
+    if orgao_match:
+        orgao_emissor = orgao_match.group(1).strip()
+        data_emissao_raw = orgao_match.group(2).strip()
+    else:
+        orgao_emissor = get("Orgão Expeditor") or get("Órgão Emissor") or ""
+        data_emissao_raw = get("Data Emissão") or ""
+    de_parts = re.split(r'[/\-]', data_emissao_raw)
+    dia_emissao = de_parts[0].zfill(2) if len(de_parts) > 0 and de_parts[0] else ""
+    mes_emissao = de_parts[1].zfill(2) if len(de_parts) > 1 and de_parts[1] else ""
+    ano_emissao = de_parts[2] if len(de_parts) > 2 else ""
+    
     phone1 = get("Telefone Celular") or get("Telefone 1")
     phone2 = get("Telefone Residencial") or get("Telefone 2")
     email = get("E-mail") or get("Email")
     
-    endereco_match = re.search(r'Cidade:\s*UF:\s*\n([^\n]+)\n([0-9]+)\n([^\n]+)\n([A-Z]{2})', raw, re.I)
-    if endereco_match:
-        cidade_novo = endereco_match.group(1).strip()
-        numero_novo = endereco_match.group(2).strip()
-        bairro_novo = endereco_match.group(3).strip()
-        uf_novo = endereco_match.group(4).strip()
+    # ─── ENDEREÇO - NOVO FORMATO ─────────────────────────────────────────────
+    # Endereço e CEP: "Endereço:\n CEP:\n R 24 DE AGOSTO\n 69.830-000"
+    end_cep_match = re.search(r'Endereço:\s*(?:CEP:)?\s*\n([^\n]+)\n([0-9\.\-]+)', raw, re.I)
+    endereco_novo = end_cep_match.group(1).strip() if end_cep_match else ""
+    cep_novo      = end_cep_match.group(2).strip() if end_cep_match else ""
+
+    # Número: logo após "Número:\n" - se numérico é o número, senão é complemento
+    num_raw_m = re.search(r'Número:\s*\n([^\n]+)', raw, re.I)
+    num_raw   = num_raw_m.group(1).strip() if num_raw_m else ""
+    if num_raw and re.match(r'^[0-9]+$', num_raw):
+        numero_raw_ok    = num_raw
+        complemento_novo = ""
+    else:
+        numero_raw_ok    = ""
+        complemento_novo = num_raw if num_raw and ":" not in num_raw else ""  # "AME" sim, "Complemento: Bairro:" não
+
+    # Bairro inline: "Complemento: Bairro:\n LABREA"
+    bairro_cb_m = re.search(r'Complemento:\s*Bairro:\s*\n([^\n]+)', raw, re.I)
+    bairro_cb   = bairro_cb_m.group(1).strip() if bairro_cb_m else ""
+
+    # Padrão A (Luis/Jacqueline): "Cidade: UF:\n APUI\n 28\n CENTRO\n AM"
+    end_A = re.search(r'Cidade:\s*UF:\s*\n([^\n]+)\n([0-9]+)\n([^\n]+)\n([A-Z]{2})\b', raw, re.I)
+    # Padrão B (Diana): tem lixo "Não/Sim" antes do número real
+    end_B = re.search(r'Cidade:\s*UF:.*?\n(?:(?:Não|Sim)\n)+([0-9]+)\n([^\n]+)\n([A-Z]{2})\b', raw, re.I | re.DOTALL)
+
+    if end_A:
+        cidade_novo = end_A.group(1).strip()
+        numero_novo = end_A.group(2).strip()
+        bairro_novo = end_A.group(3).strip()
+        uf_novo     = end_A.group(4).strip()
+    elif end_B:
+        cidade_novo = bairro_cb        # cidade vem de "Complemento: Bairro:\n LABREA"
+        numero_novo = end_B.group(1).strip()
+        bairro_novo = end_B.group(2).strip()
+        uf_novo     = end_B.group(3).strip()
     else:
         cidade_novo = numero_novo = bairro_novo = uf_novo = ""
-    
-    end_cep_match = re.search(r'Endereço:\s*(?:CEP:)?\s*\n([^\n]+)\n([0-9\.\-]+)', raw, re.I)
-    if end_cep_match:
-        endereco_novo = end_cep_match.group(1).strip()
-        cep_novo = end_cep_match.group(2).strip()
-    else:
-        endereco_novo = cep_novo = ""
-    
-    endereco = endereco_novo or get("Endereço")
-    numero = numero_novo or get("Número")
-    complemento = get("Complemento")
-    bairro = bairro_novo or get("Bairro")
-    cidade = cidade_novo or get("Cidade")
-    uf = uf_novo or get("UF")
-    cep = cep_novo or get("CEP")
+
+    endereco    = endereco_novo    or get("Endereço")
+    numero      = numero_raw_ok    or numero_novo or get("Número")
+    complemento = complemento_novo or get("Complemento")
+    bairro      = bairro_novo      or get("Bairro")
+    cidade      = cidade_novo      or get("Cidade")
+    uf          = uf_novo          or get("UF")
+    cep         = cep_novo         or get("CEP")
     
     modelo = get("Modelo")
     
@@ -186,8 +221,6 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
     endereco_completo = endereco
     if numero:
         endereco_completo = f"{endereco}, {numero}"
-    if complemento:
-        endereco_completo += f" {complemento}"
 
     data_parts = re.split(r'[/\-]', data_venda)
     dia_venda = data_parts[0].zfill(2) if len(data_parts) > 0 and data_parts[0] else ""
@@ -226,7 +259,7 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
         "NOME": nome, "DIA": dia_nasc, "MÊS": mes_nasc, "ANO": ano_nasc,
         "NACIONALIDADE": nac, "1": ec_solteiro, "2": ec_casado, "3": ec_div, "4": ec_outros,
         "PROFISSÃO": profissao, "NÚMERO DO CPF": cpf_fmt, "NÚMERO DE IDENTIDADERG": rg,
-        "ORGÃO EMISSOR": "", "DIA 2": "", "MÊS 2": "", "ANO 2": "",
+        "ORGÃO EMISSOR": orgao_emissor, "DIA 2": dia_emissao, "MÊS 2": mes_emissao, "ANO 2": ano_emissao,
         "ENDEREÇO": endereco_completo, "BAIRRO": bairro, "CIDADE": cidade, "ESTADO": uf, "CEP": cep,
         "DDD 1": fmt_ddd(phone1), "TELEFONE 1": fmt_tel(phone1), "TELEFONE 2": phone2, "EMAIL": email,
         "NRECI": nrecibo, "NPROP": nproposta, "MODELO": modelo,
