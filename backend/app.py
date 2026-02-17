@@ -8,7 +8,6 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# ─── Tabela de vendedores ──────────────────────────────────────────────────
 VENDEDORES = {
     "29070003": {"nome": "ALEXSANDRO ALVES DE SOUZA",           "pdv": "LABREA"},
     "29070004": {"nome": "ANDREI ALVES DE SOUZA",               "pdv": "HUMAITA"},
@@ -44,7 +43,6 @@ VENDEDORES = {
     "29070119": {"nome": "RUBENITO GOMES ONOFRE JUNIOR",        "pdv": "BOCA DO ACRE"},
 }
 
-# ─── Tabela de fretes por PDV ──────────────────────────────────────────────
 FRETES = {
     "LABREA":       {"valor": "650,00", "extenso": "SEISCENTOS E CINQUENTA"},
     "CANUTAMA":     {"valor": "550,00", "extenso": "QUINHENTOS E CINQUENTA"},
@@ -63,7 +61,8 @@ def nome_curto(nome_completo):
     return f"{partes[0]} {partes[-1]}"
 
 def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricula="") -> dict:
-    def get(label):
+    # Parser formato ANTIGO (label:\n valor) - NÃO MEXER
+    def get_old(label):
         pattern = rf"^{re.escape(label)}:\s*\n([^\n]+)"
         match = re.search(pattern, raw, re.IGNORECASE | re.MULTILINE)
         if match:
@@ -72,57 +71,104 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
                 return ""
             return val
         return ""
+    
+    # Parser formato NOVO (inline + estruturas mistas)
+    def get_new(label):
+        pattern = rf"{re.escape(label)}:\s*([^\n]+)"
+        match = re.search(pattern, raw, re.IGNORECASE)
+        if match:
+            val = match.group(1).strip()
+            val = re.sub(r'\s+(Nome Social|Ocupação|Pessoa|Tipo Documento|Orgão Expeditor|Data Emissão|Gênero|Estado Civil|Emancipado|Alfabetizado|Telefone Recado|Telefone Residencial|Telefone Celular|E-mail|Nacionalidade|UF de Nascimento|Número|Complemento|Bairro|Cidade|UF|Categoria|Prazo Original Grupo|Tipo de Cota|Dia Vencimento|Data de Venda|Plano|Valor do Crédito|Modelo):.*', '', val, flags=re.IGNORECASE).strip()
+            if val and not val.endswith(':') and val != '-':
+                return val
+        return ""
+    
+    def get(label):
+        val = get_new(label)
+        if val:
+            return val
+        return get_old(label)
 
-    nome          = get("Nome")
-    ddn           = get("Data de Nascimento")
-    nac           = get("Nacionalidade")
-    estado_civil  = get("Estado Civil").upper()
-    profissao     = get("Ocupação") or get("Profissão")
-    cpf           = get("CPF")
-    rg            = get("Número do Documento") or get("RG")
-    phone1        = get("Telefone Celular") or get("Telefone 1")
-    phone2        = get("Telefone Residencial") or get("Telefone 2")
-    email         = get("E-mail") or get("Email")
-    endereco      = get("Endereço")
-    numero        = get("Número")
-    complemento   = get("Complemento")
-    bairro        = get("Bairro")
-    cidade        = get("Cidade")
-    uf            = get("UF")
-    cep           = get("CEP")
-    modelo        = get("Modelo")
-    valor_bem     = get("Valor do Bem Base*") or get("Valor do Bem Base")
-    valor_parc    = get("Valor da Parcela")
-    prazo         = get("Prazo")
-    vencimento    = get("Dia Vencimento")
-    tipo_cota     = get("Tipo de Cota").upper()
-    plano         = get("Plano").upper()
-    data_venda    = get("Data de Venda")
+    nome = get("Nome")
+    ddn = get("Data Nascimento") or get("Data de Nascimento")
+    nac = get("Nacionalidade")
+    
+    # Estado Civil - novo formato: "Estado Civil: \n Emancipado: \n SOLTEIRO(A)"
+    estado_civil_match = re.search(r'Estado\s+Civil:.*?\n(?:Emancipado:)?\s*\n([A-Z]+(?:\([A-Z]\))?)', raw, re.I | re.DOTALL)
+    estado_civil = estado_civil_match.group(1).strip().upper() if estado_civil_match else get("Estado Civil").upper()
+    
+    # Profissão/Ocupação - novo formato vem antes de "Pessoa:"
+    profissao_match = re.search(r'Ocupação:\s*(?:Pessoa:)?\s*\n([A-Z]+)', raw, re.I)
+    profissao = profissao_match.group(1).strip() if profissao_match else (get("Ocupação") or get("Profissão"))
+    
+    cpf = get("CPF")
+    
+    rg_match = re.search(r'Número\s+Documento:.*?\n(?:REGISTRO\s+GERAL|RG)?\s*\n?([0-9]+)', raw, re.I | re.DOTALL)
+    rg = rg_match.group(1).strip() if rg_match else (get("Número do Documento") or get("RG"))
+    
+    phone1 = get("Telefone Celular") or get("Telefone 1")
+    phone2 = get("Telefone Residencial") or get("Telefone 2")
+    email = get("E-mail") or get("Email")
+    
+    endereco_match = re.search(r'Cidade:\s*UF:\s*\n([^\n]+)\n([0-9]+)\n([^\n]+)\n([A-Z]{2})', raw, re.I)
+    if endereco_match:
+        cidade_novo = endereco_match.group(1).strip()
+        numero_novo = endereco_match.group(2).strip()
+        bairro_novo = endereco_match.group(3).strip()
+        uf_novo = endereco_match.group(4).strip()
+    else:
+        cidade_novo = numero_novo = bairro_novo = uf_novo = ""
+    
+    end_cep_match = re.search(r'Endereço:\s*(?:CEP:)?\s*\n([^\n]+)\n([0-9\.\-]+)', raw, re.I)
+    if end_cep_match:
+        endereco_novo = end_cep_match.group(1).strip()
+        cep_novo = end_cep_match.group(2).strip()
+    else:
+        endereco_novo = cep_novo = ""
+    
+    endereco = endereco_novo or get("Endereço")
+    numero = numero_novo or get("Número")
+    complemento = get("Complemento")
+    bairro = bairro_novo or get("Bairro")
+    cidade = cidade_novo or get("Cidade")
+    uf = uf_novo or get("UF")
+    cep = cep_novo or get("CEP")
+    
+    modelo = get("Modelo")
+    
+    valor_match = re.search(r'Valor\s+do\s+Crédito\*?:.*?\n?(R\$\s*[0-9\.,]+)', raw, re.I | re.DOTALL)
+    valor_bem = valor_match.group(1).strip() if valor_match else (get("Valor do Bem Base*") or get("Valor do Bem Base"))
+    
+    parc_match = re.search(r'Valor\s+Total\s+da\s+Parcela\s+R\$\s*\n?([0-9\.,]+)', raw, re.I | re.DOTALL)
+    valor_parc = parc_match.group(1).strip() if parc_match else get("Valor da Parcela")
+    
+    prazo_match = re.search(r'Prazo\s+Original\s+Grupo:.*?([0-9]+)', raw, re.I | re.DOTALL)
+    prazo = prazo_match.group(1).strip() if prazo_match else get("Prazo")
+    
+    vencimento = get("Dia Vencimento")
+    
+    # Tipo de Cota - novo formato: "Tipo de Cota: 25 \n Cota Reposição"
+    tipo_cota_match = re.search(r'Tipo\s+de\s+Cota:.*?\n(Cota\s+(?:Nova|Reposição|Reposicao))', raw, re.I | re.DOTALL)
+    tipo_cota = tipo_cota_match.group(1).strip().upper() if tipo_cota_match else get("Tipo de Cota").upper()
+    
+    plano = get("Plano").upper()
+    data_venda = get("Data de Venda")
 
-    nrecibo   = nrecibo_manual or ""
+    nrecibo = nrecibo_manual or ""
     nproposta = nproposta_manual or ""
 
-    # Lookup vendedor
-    vendedor      = VENDEDORES.get(matricula.strip(), {})
+    vendedor = VENDEDORES.get(matricula.strip(), {})
     nome_vendedor = vendedor.get("nome", "")
-    pdv           = vendedor.get("pdv", "")
-
-    # Lookup frete pelo PDV
-    frete         = FRETES.get(pdv.upper(), {})
-    frete_valor   = frete.get("valor", "")
+    pdv = vendedor.get("pdv", "")
+    frete = FRETES.get(pdv.upper(), {})
+    frete_valor = frete.get("valor", "")
     frete_extenso = frete.get("extenso", "")
 
-    # Vendedor/Código: PRIMEIRO ÚLTIMO - MATRÍCULA
-    if nome_vendedor and matricula:
-        vendedor_codigo = f"{nome_curto(nome_vendedor)} - {matricula}"
-    else:
-        vendedor_codigo = ""
+    vendedor_codigo = f"{nome_curto(nome_vendedor)} - {matricula}" if nome_vendedor and matricula else ""
 
-    # CPF formatado
     c = re.sub(r'\D', '', cpf)
     cpf_fmt = f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}" if len(c) == 11 else cpf
 
-    # Telefones
     def fmt_ddd(p):
         d = re.sub(r'\D', '', p)
         return d[:2] if len(d) >= 2 else ""
@@ -132,44 +178,35 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
         if len(d) == 10: return f"{d[2:6]}-{d[6:]}"
         return p
 
-    # Data nascimento
     ddn_parts = re.split(r'[/\-]', ddn)
     dia_nasc = ddn_parts[0].zfill(2) if len(ddn_parts) > 0 and ddn_parts[0] else ""
     mes_nasc = ddn_parts[1].zfill(2) if len(ddn_parts) > 1 and ddn_parts[1] else ""
     ano_nasc = ddn_parts[2] if len(ddn_parts) > 2 else ""
 
-    # Endereço completo
     endereco_completo = endereco
     if numero:
         endereco_completo = f"{endereco}, {numero}"
     if complemento:
         endereco_completo += f" {complemento}"
 
-    # Data de venda
     data_parts = re.split(r'[/\-]', data_venda)
-    dia_venda     = data_parts[0].zfill(2) if len(data_parts) > 0 and data_parts[0] else ""
+    dia_venda = data_parts[0].zfill(2) if len(data_parts) > 0 and data_parts[0] else ""
     mes_venda_num = data_parts[1].zfill(2) if len(data_parts) > 1 else ""
-    ano_venda     = data_parts[2] if len(data_parts) > 2 else ""
-    meses = {
-        "01":"JANEIRO","02":"FEVEREIRO","03":"MARÇO","04":"ABRIL",
-        "05":"MAIO","06":"JUNHO","07":"JULHO","08":"AGOSTO",
-        "09":"SETEMBRO","10":"OUTUBRO","11":"NOVEMBRO","12":"DEZEMBRO"
-    }
+    ano_venda = data_parts[2] if len(data_parts) > 2 else ""
+    meses = {"01":"JANEIRO","02":"FEVEREIRO","03":"MARÇO","04":"ABRIL","05":"MAIO","06":"JUNHO",
+             "07":"JULHO","08":"AGOSTO","09":"SETEMBRO","10":"OUTUBRO","11":"NOVEMBRO","12":"DEZEMBRO"}
     mes_venda = meses.get(mes_venda_num, mes_venda_num.upper())
 
     local_assinatura = f"{cidade}-{uf}" if cidade and uf else cidade or ""
 
-    # Estado civil
     ec_solteiro = "X" if "SOLTEIRO" in estado_civil else ""
-    ec_casado   = "X" if "CASADO" in estado_civil and "DIVORCIADO" not in estado_civil else ""
-    ec_div      = "X" if "DIVORCIADO" in estado_civil else ""
-    ec_outros   = "X" if estado_civil and not any(x in estado_civil for x in ["SOLTEIRO","CASADO","DIVORCIADO"]) else ""
+    ec_casado = "X" if "CASADO" in estado_civil and "DIVORCIADO" not in estado_civil else ""
+    ec_div = "X" if "DIVORCIADO" in estado_civil else ""
+    ec_outros = "X" if estado_civil and not any(x in estado_civil for x in ["SOLTEIRO","CASADO","DIVORCIADO"]) else ""
 
-    # Cota
-    cota_nova  = "X" if "NOVA" in tipo_cota else ""
+    cota_nova = "X" if "NOVA" in tipo_cota else ""
     cota_repos = "X" if "REPOSI" in tipo_cota else ""
 
-    # Plano
     plano_map = {
         "SUPER LEGAL":"Texto6","MULTICHANCES":"Texto7",
         "VOU DE HONDA +":"Texto8","MINHA SCOOTER HONDA+":"Texto9",
@@ -186,58 +223,21 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
             break
 
     fields = {
-        "NOME":                   nome,
-        "DIA":                    dia_nasc,
-        "MÊS":                    mes_nasc,
-        "ANO":                    ano_nasc,
-        "NACIONALIDADE":          nac,
-        "1":                      ec_solteiro,
-        "2":                      ec_casado,
-        "3":                      ec_div,
-        "4":                      ec_outros,
-        "PROFISSÃO":              profissao,
-        "NÚMERO DO CPF":          cpf_fmt,
-        "NÚMERO DE IDENTIDADERG": rg,
-        "ORGÃO EMISSOR":          "",
-        "DIA 2":                  "",
-        "MÊS 2":                  "",
-        "ANO 2":                  "",
-        "ENDEREÇO":               endereco_completo,
-        "BAIRRO":                 bairro,
-        "CIDADE":                 cidade,
-        "ESTADO":                 uf,
-        "CEP":                    cep,
-        "DDD 1":                  fmt_ddd(phone1),
-        "TELEFONE 1":             fmt_tel(phone1),
-        "TELEFONE 2":             phone2,
-        "EMAIL":                  email,
-        "NRECI":                  nrecibo,
-        "NPROP":                  nproposta,
-        "MODELO":                 modelo,
-        "VALOR BASE DO BEM":      valor_bem,
-        "VALOR DA PARCELA":       valor_parc,
-        "QTD DE PARC":            prazo,
-        "VENC DE PARCELA":        vencimento,
-        "Texto2":                 cota_nova,
-        "Texto3":                 cota_repos,
-        "Texto4":                 "X",
-        "Texto5":                 "",
-        "CIDADE_WKMH":            local_assinatura,
-        "DIA_0HVI":               dia_venda,
-        "MES":                    mes_venda,
-        "ANO_GXGT":               ano_venda,
-        # Pág 2 e 6
-        "Assinatura Cliente":     "",
-        "IDVE":                   vendedor_codigo,
-        "PDV":                    pdv,
-        "MAT":                    matricula,
-        # Pág 3
+        "NOME": nome, "DIA": dia_nasc, "MÊS": mes_nasc, "ANO": ano_nasc,
+        "NACIONALIDADE": nac, "1": ec_solteiro, "2": ec_casado, "3": ec_div, "4": ec_outros,
+        "PROFISSÃO": profissao, "NÚMERO DO CPF": cpf_fmt, "NÚMERO DE IDENTIDADERG": rg,
+        "ORGÃO EMISSOR": "", "DIA 2": "", "MÊS 2": "", "ANO 2": "",
+        "ENDEREÇO": endereco_completo, "BAIRRO": bairro, "CIDADE": cidade, "ESTADO": uf, "CEP": cep,
+        "DDD 1": fmt_ddd(phone1), "TELEFONE 1": fmt_tel(phone1), "TELEFONE 2": phone2, "EMAIL": email,
+        "NRECI": nrecibo, "NPROP": nproposta, "MODELO": modelo,
+        "VALOR BASE DO BEM": valor_bem, "VALOR DA PARCELA": valor_parc,
+        "QTD DE PARC": prazo, "VENC DE PARCELA": vencimento,
+        "Texto2": cota_nova, "Texto3": cota_repos, "Texto4": "X", "Texto5": "",
+        "CIDADE_WKMH": local_assinatura, "DIA_0HVI": dia_venda, "MES": mes_venda, "ANO_GXGT": ano_venda,
+        "Assinatura Cliente": "", "IDVE": vendedor_codigo, "PDV": pdv, "MAT": matricula,
         "autoriza a REVEMAR COMÉRCIO DE MOTOS LTDA CONCESSIONÁRIA a": "",
-        "undefined":              "",
-        "ANOM":                   "",
-        # Pág 4 - frete automático pelo PDV
-        "CIENTE DO PAGAMENTO DO FRETE NO VALOR DE R": frete_valor,
-        "undefined_2":            frete_extenso,
+        "undefined": "", "ANOM": "",
+        "CIENTE DO PAGAMENTO DO FRETE NO VALOR DE R": frete_valor, "undefined_2": frete_extenso,
         "ESCREVER DE PRÓPRIO PUNHO FICO CIENTE DO VALOR DO FRETE": "",
         "Assinatura do responsável Legal ou Assinatura a Rogo quando": "",
         "Assinatura do responsável Legal ou Assinatura a Rogo": "",
@@ -255,11 +255,11 @@ def preencher():
     if "dados" not in request.form:
         return jsonify({"erro": "Dados do cliente não enviados"}), 400
 
-    pdf_file         = request.files["pdf"]
-    dados_raw        = request.form["dados"]
+    pdf_file = request.files["pdf"]
+    dados_raw = request.form["dados"]
     nproposta_manual = request.form.get("nproposta", "")
-    nrecibo_manual   = request.form.get("nrecibo", "")
-    matricula        = request.form.get("matricula", "")
+    nrecibo_manual = request.form.get("nrecibo", "")
+    matricula = request.form.get("matricula", "")
 
     try:
         fields = parse_client_data(dados_raw, nproposta_manual, nrecibo_manual, matricula)
@@ -268,21 +268,15 @@ def preencher():
         writer.append(reader)
 
         for page in writer.pages:
-            writer.update_page_form_field_values(
-                page, fields, auto_regenerate=False
-            )
+            writer.update_page_form_field_values(page, fields, auto_regenerate=False)
 
         output = io.BytesIO()
         writer.write(output)
         output.seek(0)
 
         nome_arquivo = re.sub(r'[^a-zA-Z0-9_]', '_', fields.get("NOME", "documento"))
-        return send_file(
-            output,
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=f"REVEMAR_{nome_arquivo}.pdf"
-        )
+        return send_file(output, mimetype="application/pdf", as_attachment=True,
+                        download_name=f"REVEMAR_{nome_arquivo}.pdf")
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
@@ -291,14 +285,12 @@ def preencher():
 def get_vendedor(matricula):
     vendedor = VENDEDORES.get(matricula.strip())
     if vendedor:
-        pdv    = vendedor["pdv"]
-        frete  = FRETES.get(pdv.upper(), {})
+        pdv = vendedor["pdv"]
+        frete = FRETES.get(pdv.upper(), {})
         return jsonify({
-            "matricula":  matricula,
-            "nome":       vendedor["nome"],
+            "matricula": matricula, "nome": vendedor["nome"],
             "nome_curto": nome_curto(vendedor["nome"]),
-            "pdv":        pdv,
-            "frete":      frete.get("valor", ""),
+            "pdv": pdv, "frete": frete.get("valor", ""),
         })
     return jsonify({"erro": "Matrícula não encontrada"}), 404
 
