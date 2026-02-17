@@ -143,8 +143,8 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
     bairro_cb_m = re.search(r'Complemento:\s*Bairro:\s*\n([^\n]+)', raw, re.I)
     bairro_cb   = bairro_cb_m.group(1).strip() if bairro_cb_m else ""
 
-    # Padrão A (Luis/Jacqueline): "Cidade: UF:\n APUI\n 28\n CENTRO\n AM"
-    end_A = re.search(r'Cidade:\s*UF:\s*\n([^\n]+)\n([0-9]+)\n([^\n]+)\n([A-Z]{2})\b', raw, re.I)
+    # Padrão A (Luis/Jacqueline): cidade na 1ª linha, pode ter lixo Não/Sim antes do número
+    end_A = re.search(r'Cidade:\s*UF:\s*\n([A-Z][^\n]+)\n(?:(?:Não|Sim)\n)*([0-9]+)\n([^\n]+)\n([A-Z]{2})\b', raw, re.I)
     # Padrão B (Diana): tem lixo "Não/Sim" antes do número real
     end_B = re.search(r'Cidade:\s*UF:.*?\n(?:(?:Não|Sim)\n)+([0-9]+)\n([^\n]+)\n([A-Z]{2})\b', raw, re.I | re.DOTALL)
 
