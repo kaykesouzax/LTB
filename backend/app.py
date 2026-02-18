@@ -146,9 +146,10 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
         bairro_cb_m = re.search(r'Complemento:\s*Bairro:\s*\n([^\n]+)', raw, re.I)
         bairro_cb   = bairro_cb_m.group(1).strip() if bairro_cb_m else ""
 
-    # Padrão unificado: cidade na 1ª linha após "Cidade: UF:", depois lixo Não/Sim, número, bairro, UF
+    # Padrão unificado: cidade na 1ª linha após "Cidade: UF:", depois lixo (qualquer linha não-numérica),
+    # número, bairro, UF — robusto a espaços no início das linhas
     end_bloco = re.search(
-        r'Cidade:\s*UF:\s*\n([A-Z][^\n]+)\n(?:(?:Não|Sim)\n)*([0-9]+)\n([^\n]+)\n([A-Z]{2})\b',
+        r'Cidade:\s*UF:\s*\n\s*([^\n]+)\n(?:\s*[^\n]*\n)*?\s*(\d+)\n\s*([^\n]+)\n\s*([A-Z]{2})(?=\s*\n|\s*$)',
         raw, re.I
     )
 
