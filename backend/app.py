@@ -79,6 +79,10 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
         if match:
             val = match.group(1).strip()
             val = re.sub(r'\s+(Nome Social|Ocupação|Pessoa|Tipo Documento|Orgão Expeditor|Data Emissão|Gênero|Estado Civil|Emancipado|Alfabetizado|Telefone Recado|Telefone Residencial|Telefone Celular|E-mail|Nacionalidade|UF de Nascimento|Número|Complemento|Bairro|Cidade|UF|Categoria|Prazo Original Grupo|Tipo de Cota|Dia Vencimento|Data de Venda|Plano|Valor do Crédito|Modelo):.*', '', val, flags=re.IGNORECASE).strip()
+            # Bloquear get_new de capturar campos de endereço inline (UF:, Cidade:, Bairro:)
+            # pois esses campos são extraídos pelo bloco dedicado de endereço
+            if label.upper() in ('UF', 'CIDADE', 'BAIRRO', 'NÚMERO', 'COMPLEMENTO', 'ENDEREÇO', 'CEP'):
+                return ""
             if val and not val.endswith(':') and val != '-':
                 return val
         return ""
@@ -124,47 +128,57 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
     email = get("E-mail") or get("Email")
     
     # ─── ENDEREÇO - NOVO FORMATO ─────────────────────────────────────────────
-    # Endereço e CEP: pula "CEP:\n" se presente e pega a rua na linha seguinte
+    # 1. Endereço e CEP: pula "CEP:\n" se presente e pega a rua na linha seguinte
     end_cep_match = re.search(r'Endereço:\s*\n(?:CEP:\s*\n)?([^\n]+)\n([0-9][0-9\.\-]+)', raw, re.I)
     endereco_novo = end_cep_match.group(1).strip() if end_cep_match else ""
     cep_novo      = end_cep_match.group(2).strip() if end_cep_match else ""
 
-    # Número: logo após "Número:\n" - se numérico é o número, senão é complemento
+    # 2. Número: linha após "Número:\n" — se não for numérico é complemento
     num_raw_m = re.search(r'Número:\s*\n([^\n]+)', raw, re.I)
     num_raw   = num_raw_m.group(1).strip() if num_raw_m else ""
-    if num_raw and re.match(r'^[0-9]+$', num_raw):
-        numero_raw_ok    = num_raw
-        complemento_novo = ""
-    else:
-        numero_raw_ok    = ""
-        complemento_novo = num_raw if num_raw and ":" not in num_raw else ""  # "AME" sim, "Complemento: Bairro:" não
+    numero_raw_ok    = num_raw if (num_raw and re.match(r'^\d+$', num_raw)) else ""
+    complemento_novo = num_raw if (num_raw and not re.match(r'^\d+$', num_raw) and ":" not in num_raw) else ""
 
-    # Bairro inline: "Complemento: Bairro:\n VALOR" — só se a linha seguinte não for outra label
-    if re.search(r'Complemento:\s*Bairro:\s*\nCidade:', raw, re.I):
-        bairro_cb = ""  # bairro vem do bloco Cidade/UF
-    else:
-        bairro_cb_m = re.search(r'Complemento:\s*Bairro:\s*\n([^\n]+)', raw, re.I)
-        bairro_cb   = bairro_cb_m.group(1).strip() if bairro_cb_m else ""
+    # 3. Bairro ANTES de Cidade: "Complemento: Bairro:\n VALOR\n Cidade:"
+    #    (caso Diana — cidade ausente no bloco, bairro vem aqui)
+    bairro_antes_m = re.search(r'Complemento:\s*Bairro:\s*\n\s*([^\n]+)\n\s*Cidade:', raw, re.I)
+    bairro_antes   = bairro_antes_m.group(1).strip() if bairro_antes_m else ""
 
-    # Padrão unificado: cidade na 1ª linha após "Cidade: UF:", depois lixo (qualquer linha não-numérica),
-    # número, bairro, UF — robusto a espaços no início das linhas
-    end_bloco = re.search(
-        r'Cidade:\s*UF:\s*\n\s*([^\n]+)\n(?:\s*[^\n]*\n)*?\s*(\d+)\n\s*([^\n]+)\n\s*([A-Z]{2})(?=\s*\n|\s*$)',
-        raw, re.I
-    )
+    # 4. Bloco Cidade/UF: classifica cada linha em lixo/UF/número/texto
+    bloco_m = re.search(r'Cidade:\s*UF:\s*\n(.*?)(?=ITEM|\Z)', raw, re.I | re.DOTALL)
+    cidade_novo = bairro_no_bloco = numero_bloco = uf_novo = ""
 
-    if end_bloco:
-        cidade_novo = end_bloco.group(1).strip()
-        numero_novo = end_bloco.group(2).strip()
-        bairro_novo = end_bloco.group(3).strip()
-        uf_novo     = end_bloco.group(4).strip()
-    else:
-        cidade_novo = numero_novo = bairro_novo = uf_novo = ""
+    if bloco_m:
+        linhas = [l.strip() for l in bloco_m.group(1).splitlines() if l.strip()]
+        lixo_set = {'não', 'sim'}
+        nums_bloco = []
+        outros     = []
+
+        for l in linhas:
+            if l.lower() in lixo_set:
+                continue
+            elif re.match(r'^[A-Z]{2}$', l):
+                uf_novo = l
+            elif re.match(r'^\d+$', l):
+                nums_bloco.append(l)
+            else:
+                outros.append(l)
+
+        numero_bloco = nums_bloco[0] if nums_bloco else ""
+
+        if bairro_antes:
+            # Cidade = bairro_antes (ex: LABREA), bairro real está no bloco (ex: BARRA LIMPA)
+            cidade_novo     = bairro_antes
+            bairro_no_bloco = outros[0] if outros else ""
+        else:
+            # Cidade é o primeiro texto do bloco, bairro é o segundo
+            cidade_novo     = outros[0] if outros else ""
+            bairro_no_bloco = outros[1] if len(outros) > 1 else ""
 
     endereco    = endereco_novo    or get("Endereço")
-    numero      = numero_raw_ok    or numero_novo or get("Número")
+    numero      = numero_raw_ok    or numero_bloco or get("Número")
     complemento = complemento_novo or get("Complemento")
-    bairro      = bairro_novo      or get("Bairro")
+    bairro      = bairro_no_bloco  or bairro_antes or get("Bairro")
     cidade      = cidade_novo      or get("Cidade")
     uf          = uf_novo          or get("UF")
     cep         = cep_novo         or get("CEP")
@@ -219,8 +233,6 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
     ano_nasc = ddn_parts[2] if len(ddn_parts) > 2 else ""
 
     endereco_completo = endereco
-    if numero:
-        endereco_completo = f"{endereco}, {numero}"
 
     data_parts = re.split(r'[/\-]', data_venda)
     dia_venda = data_parts[0].zfill(2) if len(data_parts) > 0 and data_parts[0] else ""
