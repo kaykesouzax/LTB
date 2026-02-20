@@ -124,7 +124,7 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
     ano_emissao = de_parts[2] if len(de_parts) > 2 else ""
     
     phone1 = get("Telefone Celular") or get("Telefone 1")
-    phone2 = get("Telefone Residencial") or get("Telefone 2")
+    phone2 = get("Telefone Residencial") or get("Telefone Recado") or get("Telefone 2")
     email = get("E-mail") or get("Email")
     
     # ─── ENDEREÇO - NOVO FORMATO ─────────────────────────────────────────────
@@ -261,9 +261,12 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
         "#VOU DE HONDA":"Texto16","TRX/CRF":"Texto17",
         "ESPECIAL":"Texto18","MASTER":"Texto19","ADVANCE":"Texto20",
     }
+    def normalizar_plano(s):
+        return re.sub(r'[\s#]', '', s).upper()
+    plano_norm = normalizar_plano(plano)
     plano_field = None
     for key, field in plano_map.items():
-        if key in plano:
+        if normalizar_plano(key) in plano_norm:
             plano_field = field
             break
 
