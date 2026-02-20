@@ -262,11 +262,11 @@ def parse_client_data(raw: str, nproposta_manual="", nrecibo_manual="", matricul
         "ESPECIAL":"Texto18","MASTER":"Texto19","ADVANCE":"Texto20",
     }
     def normalizar_plano(s):
-        return re.sub(r'[\s#]', '', s).upper()
+        return re.sub(r'\s', '', s).upper()
     plano_norm = normalizar_plano(plano)
     plano_field = None
     for key, field in plano_map.items():
-        if normalizar_plano(key) in plano_norm:
+        if normalizar_plano(key) == plano_norm:
             plano_field = field
             break
 
