@@ -40,7 +40,6 @@ VENDEDORES = {
     "29070115": {"nome": "ROSA CARVALHO NUNES",                 "pdv": "HUMAITA"},
     "29070116": {"nome": "ANTONIA AGUIDA NASCIMENTO DA S.",     "pdv": "LABREA"},
     "29070118": {"nome": "JANDERSON GUSTAVO CARNEIRO",          "pdv": "LABREA"},
-    "29070119": {"nome": "RUBENITO GOMES ONOFRE JUNIOR",        "pdv": "BOCA DO ACRE"},
 }
 
 FRETES = {
