@@ -49,8 +49,8 @@ FRETES = {
     "HUMAITA":      {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
     "KM 180":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
     "APUI":         {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "BOCA DO ACRE": {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "PAUINI":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "BOCA DO ACRE": {"valor": "1.000,00", "extenso": "MIL REAIS"},
+    "PAUINI":       {"valor": "1.000,00", "extenso": "MIL REAIS"},
 }
 
 def nome_curto(nome_completo):
@@ -323,7 +323,7 @@ def preencher():
 
         nome_arquivo = re.sub(r'[^a-zA-Z0-9_]', '_', fields.get("NOME", "documento"))
         return send_file(output, mimetype="application/pdf", as_attachment=True,
-                        download_name=f"REVEMAR_{nome_arquivo}.pdf")
+                        download_name=f"Termos_{nome_arquivo}.pdf")
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
