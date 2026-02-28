@@ -44,14 +44,14 @@ VENDEDORES = {
 }
 
 FRETES = {
-    "LABREA":       {"valor": "650,00", "extenso": "SEISCENTOS E CINQUENTA"},
-    "CANUTAMA":     {"valor": "550,00", "extenso": "QUINHENTOS E CINQUENTA"},
-    "TAPAUA":       {"valor": "550,00", "extenso": "QUINHENTOS E CINQUENTA"},
+    "LABREA":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "CANUTAMA":     {"valor": "800,00", "extenso": "OITOCENTOS REAIS"},
+    "TAPAUA":       {"valor": "600,00", "extenso": "SEISCENTOS REAIS"},
     "HUMAITA":      {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
     "KM 180":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "APUI":         {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "BOCA DO ACRE": {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "PAUINI":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "APUI":         {"valor": "900,00", "extenso": "NOVECENTOS REAIS"},
+    "BOCA DO ACRE": {"valor": "1.000,00", "extenso": "MIL REAIS"},
+    "PAUINI":       {"valor": "1.300,00", "extenso": "MIL E TREZENTOS"},
 }
 
 def nome_curto(nome_completo):
