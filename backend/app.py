@@ -14,7 +14,7 @@ VENDEDORES = {
     "29070005": {"nome": "ANGELA ALMEIDA DA SILVA",             "pdv": "CANUTAMA"},
     "29070006": {"nome": "ANTONIO MARCIO BATISTA DOS S.",       "pdv": "LABREA"},
     "29070008": {"nome": "DIEGO PEREIRA GOMES",                 "pdv": "HUMAITA"},
-    "29070009": {"nome": "EDSON RUAN LEAL NOGUEIRA",            "pdv": "HUMAITA"},
+    "29070009": {"nome": "EDSON RUAN",                          "pdv": "HUMAITA"},
     "29070012": {"nome": "LUAN HENRIQUE ROCHA DIAS",            "pdv": "APUI"},
     "29070014": {"nome": "RAIMISON DE FRANCA RODRIGUES",        "pdv": "HUMAITA"},
     "29070016": {"nome": "THALYS CASTRO DA SILVA",              "pdv": "LABREA"},
@@ -321,7 +321,7 @@ def preencher():
 
         nome_arquivo = re.sub(r'[^a-zA-Z0-9_]', '_', fields.get("NOME", "documento"))
         return send_file(output, mimetype="application/pdf", as_attachment=True,
-                        download_name=f"REVEMAR_{nome_arquivo}.pdf")
+                        download_name=f"TERMOS_{nome_arquivo}.pdf")
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
