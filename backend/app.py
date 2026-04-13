@@ -14,7 +14,7 @@ VENDEDORES = {
     "29070005": {"nome": "ANGELA ALMEIDA DA SILVA",             "pdv": "CANUTAMA"},
     "29070006": {"nome": "ANTONIO MARCIO BATISTA DOS S.",       "pdv": "LABREA"},
     "29070008": {"nome": "DIEGO PEREIRA GOMES",                 "pdv": "HUMAITA"},
-    "29070009": {"nome": "EDSON RUAN",                          "pdv": "HUMAITA"},
+    "29070009": {"nome": "EDSON RUAN NOGUEIRA LEAL",            "pdv": "HUMAITA"},
     "29070012": {"nome": "LUAN HENRIQUE ROCHA DIAS",            "pdv": "APUI"},
     "29070014": {"nome": "RAIMISON DE FRANCA RODRIGUES",        "pdv": "HUMAITA"},
     "29070016": {"nome": "THALYS CASTRO DA SILVA",              "pdv": "LABREA"},
@@ -37,21 +37,19 @@ VENDEDORES = {
     "29070109": {"nome": "JOSE WILLIAN DA SILVA PINTO",         "pdv": "HUMAITA"},
     "29070110": {"nome": "SHIRLANE SANTANA DE MELO",            "pdv": "APUI"},
     "29070114": {"nome": "ROSIELE DA SILVA TORRES",             "pdv": "HUMAITA"},
-    "29070115": {"nome": "ROSA CARVALHO NUNES",                 "pdv": "HUMAITA"},
     "29070116": {"nome": "ANTONIA AGUIDA NASCIMENTO DA S.",     "pdv": "LABREA"},
     "29070118": {"nome": "JANDERSON GUSTAVO CARNEIRO",          "pdv": "LABREA"},
-    "29070119": {"nome": "RUBENITO GOMES ONOFRE JUNIOR",        "pdv": "BOCA DO ACRE"},
 }
 
 FRETES = {
-    "LABREA":       {"valor": "650,00", "extenso": "SEISCENTOS E CINQUENTA"},
-    "CANUTAMA":     {"valor": "550,00", "extenso": "QUINHENTOS E CINQUENTA"},
-    "TAPAUA":       {"valor": "550,00", "extenso": "QUINHENTOS E CINQUENTA"},
+    "LABREA":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "CANUTAMA":     {"valor": "800,00", "extenso": "OITOCENTOS REAIS"},
+    "TAPAUA":       {"valor": "600,00", "extenso": "SEISCENTOS REAIS"},
     "HUMAITA":      {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
     "KM 180":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "APUI":         {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "BOCA DO ACRE": {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
-    "PAUINI":       {"valor": "850,00", "extenso": "OITOCENTOS E CINQUENTA"},
+    "APUI":         {"valor": "900,00", "extenso": "NOVECENTOS REAIS"},
+    "BOCA DO ACRE": {"valor": "1.000,00", "extenso": "MIL REAIS"},
+    "PAUINI":       {"valor": "1.300,00", "extenso": "MIL E TREZENTOS"},
 }
 
 def nome_curto(nome_completo):
